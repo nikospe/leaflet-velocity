@@ -158,7 +158,7 @@ L.VelocityLayer = (L.Layer ? L.Layer : L.Class).extend({
     if (this._mouseControl) this._map.removeControl(this._mouseControl);
     this._mouseControl = null;
     this._windy = null;
-    this._map.removeLayer(this._canvasLayer);
+    if(this._map && this._canvasLayer) this._map.removeLayer(this._canvasLayer);
   }
 });
 
