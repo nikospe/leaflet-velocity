@@ -140,7 +140,7 @@ L.Control.Velocity = L.Control.extend({
     if(!gridValue) return;
     var htmlOut = "";
     var direction = self.degreesToSides(self.vectorToDegrees(gridValue[0],gridValue[1],this.options.angleConvention)) + ' Wind';
-    var speed = sel.msToBeauforts(self.vectorToSpeed(gridValue[0],gridValue[1],this.options.speedUnit)) + ' Bf';
+    var speed = self.msToBeauforts(self.vectorToSpeed(gridValue[0],gridValue[1],this.options.speedUnit)) + ' Bf';
     var directionText = 'Wind Direction: ';
     var speedText = 'Wind Speed: ';
 
