@@ -66,6 +66,68 @@ L.Control.Velocity = L.Control.extend({
     return meters * 3.6;
   },
 
+  degreesToSides: function(value) {
+    if( (value >= 337 && value <= 359) || (value >= 0 && value <= 22) ) return 'South';
+    if( value > 22 && value <= 68 ) return 'South East';
+    if( value > 68 && value <= 112 ) return 'East';
+    if( value > 112 && value <= 152 ) return 'North East';
+    if( value > 152 && value <= 202 ) return 'North';
+    if( value > 202 && value <= 245 ) return 'North West';
+    if( value > 245 && value <=  290 ) return 'West';
+    if( value > 290 && value <= 337 ) return 'South West';
+    if( value > 22 && value <= 68 ) return 'South East';
+  },
+
+  degreesTocurrentsSides: function(value) {
+    if( (value >= 337 && value <= 359) || (value >= 0 && value <= 22) ) return 'North';
+    if( value > 22 && value <= 68 ) return 'North West';
+    if( value > 68 && value <= 112 ) return 'West';
+    if( value > 112 && value <= 152 ) return 'South West';
+    if( value > 152 && value <= 202 ) return 'South';
+    if( value > 202 && value <= 245 ) return 'South East';
+    if( value > 245 && value <=  290 ) return 'East';
+    if( value > 290 && value <= 337 ) return 'North East';
+    if( value > 22 && value <= 68 ) return 'North West';
+  },
+
+  msToBeauforts: function(value) {
+    let beauforts = '-';
+    if (value<0.5){
+      beauforts = 0;
+    }else if (value>=0.5 && value<=1.5){
+      beauforts = 1;
+    }else if (value>1.5 && value<=3.3){
+      beauforts = 2;
+    }else if (value>3.3 && value<=5.5){
+      beauforts = 3;
+    }else if (value>5.5 && value<=7.9){
+      beauforts = 4;
+    }else if (value>7.9 && value<=10.7){
+      beauforts = 5;
+    }else if (value>10.7 && value<=13.8){
+      beauforts = 6;
+    }else if (value>13.8 && value<=17.1){
+      beauforts = 7;
+    }else if (value>17.1 && value<=20.7){
+      beauforts = 8;
+    }else if (value>20.7 && value<=24.4){
+      beauforts = 9;
+    }else if (value>24.4 && value<=28.4){
+      beauforts = 10;
+    }else if (value>28.4 && value<=32.6){
+      beauforts = 11;
+    }else if (value>32.6){
+      beauforts = 12;
+    }else {}
+    return beauforts;
+  },
+
+  roundToDigits: function(number, digits) {
+    if(number === 0) return 0;
+    if(!number || number === NaN || number === null) return null;
+    return parseFloat(number.toFixed(digits));
+  },
+
   _onMouseMove: function(e) {
     var self = this;
     var pos = this.options.leafletVelocity._map.containerPointToLatLng(
@@ -75,7 +137,19 @@ L.Control.Velocity = L.Control.extend({
       pos.lng,
       pos.lat
     );
+    if(!gridValue) return;
     var htmlOut = "";
+    var direction = self.degreesToSides(self.vectorToDegrees(gridValue[0],gridValue[1],this.options.angleConvention)) + ' Wind';
+    var speed = sel.msToBeauforts(self.vectorToSpeed(gridValue[0],gridValue[1],this.options.speedUnit)) + ' Bf';
+    var directionText = 'Wind Direction: ';
+    var speedText = 'Wind Speed: ';
+
+    if(this.options.velocityType.includes('Water')) {
+      direction = self.degreesTocurrentsSides(self.vectorToDegrees(gridValue[0],gridValue[1],this.options.angleConvention));
+      speed = self.roundToDigits(self.meterSec2Knots(self.vectorToSpeed(gridValue[0],gridValue[1],this.options.speedUnit)), 2) + ' Kn';
+      directionText = 'Currents Direction: ';
+      speedText = 'Currents Speed: '
+    }
 
     if (
       gridValue &&
@@ -83,25 +157,9 @@ L.Control.Velocity = L.Control.extend({
       !isNaN(gridValue[1]) &&
       gridValue[2]
     ) {
-      htmlOut =
-        "<strong>" +
-        this.options.velocityType +
-        " Direction: </strong>" +
-        self
-          .vectorToDegrees(
-            gridValue[0],
-            gridValue[1],
-            this.options.angleConvention
-          )
-          .toFixed(2) +
-        "°" +
-        ", <strong>" +
-        this.options.velocityType +
-        " Speed: </strong>" +
-        self
-          .vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit)
-          .toFixed(2) +
-        this.options.speedUnit;
+      htmlOut = "<strong>"+ directionText +"</strong>"+ direction +
+        ", <strong>"+ speedText + "</strong>"+
+        speed;
     } else {
       htmlOut = this.options.emptyString;
     }
