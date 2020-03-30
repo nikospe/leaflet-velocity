@@ -1,5 +1,9 @@
 "use strict";
 
+var _moment = _interopRequireDefault(require("moment"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
 /*
  Generic  Canvas Layer for leaflet 0.7 and 1.0-rc,
  copyright Stanislav Sumbera,  2016 , sumbera.com , license MIT
@@ -208,60 +212,33 @@ L.Control.Velocity = L.Control.extend({
   meterSec2kilometerHour: function meterSec2kilometerHour(meters) {
     return meters * 3.6;
   },
-  degreesToSides: function degreesToSides(value) {
-    if (value >= 337 && value <= 359 || value >= 0 && value <= 22) return 'South';
-    if (value > 22 && value <= 68) return 'South East';
-    if (value > 68 && value <= 112) return 'East';
-    if (value > 112 && value <= 152) return 'North East';
-    if (value > 152 && value <= 202) return 'North';
-    if (value > 202 && value <= 245) return 'North West';
-    if (value > 245 && value <= 290) return 'West';
-    if (value > 290 && value <= 337) return 'South West';
-    if (value > 22 && value <= 68) return 'South East';
-  },
-  degreesTocurrentsSides: function degreesTocurrentsSides(value) {
-    if (value >= 337 && value <= 359 || value >= 0 && value <= 22) return 'North';
-    if (value > 22 && value <= 68) return 'North West';
-    if (value > 68 && value <= 112) return 'West';
-    if (value > 112 && value <= 152) return 'South West';
-    if (value > 152 && value <= 202) return 'South';
-    if (value > 202 && value <= 245) return 'South East';
-    if (value > 245 && value <= 290) return 'East';
-    if (value > 290 && value <= 337) return 'North East';
-    if (value > 22 && value <= 68) return 'North West';
+  degreesToSides: function degreesToSides(value, type) {
+    if (value >= 337 && value <= 359 || value >= 0 && value <= 22) return type === 'wind' ? 'South' : 'North';
+    if (value > 22 && value <= 68) return type === 'wind' ? 'South East' : 'North West';
+    if (value > 68 && value <= 112) return type === 'wind' ? 'East' : 'West';
+    if (value > 112 && value <= 152) return type === 'wind' ? 'North East' : 'South West';
+    if (value > 152 && value <= 202) return type === 'wind' ? 'North' : 'South';
+    if (value > 202 && value <= 245) return type === 'wind' ? 'North West' : 'South East';
+    if (value > 245 && value <= 290) return type === 'wind' ? 'West' : 'East';
+    if (value > 290 && value <= 337) return type === 'wind' ? 'South West' : 'North East';
+    if (value > 22 && value <= 68) return type === 'wind' ? 'South East' : 'North West';
   },
   msToBeauforts: function msToBeauforts(value) {
-    var beauforts = '-';
-
-    if (value < 0.5) {
-      beauforts = 0;
-    } else if (value >= 0.5 && value <= 1.5) {
-      beauforts = 1;
-    } else if (value > 1.5 && value <= 3.3) {
-      beauforts = 2;
-    } else if (value > 3.3 && value <= 5.5) {
-      beauforts = 3;
-    } else if (value > 5.5 && value <= 7.9) {
-      beauforts = 4;
-    } else if (value > 7.9 && value <= 10.7) {
-      beauforts = 5;
-    } else if (value > 10.7 && value <= 13.8) {
-      beauforts = 6;
-    } else if (value > 13.8 && value <= 17.1) {
-      beauforts = 7;
-    } else if (value > 17.1 && value <= 20.7) {
-      beauforts = 8;
-    } else if (value > 20.7 && value <= 24.4) {
-      beauforts = 9;
-    } else if (value > 24.4 && value <= 28.4) {
-      beauforts = 10;
-    } else if (value > 28.4 && value <= 32.6) {
-      beauforts = 11;
-    } else if (value > 32.6) {
-      beauforts = 12;
-    } else {}
-
-    return beauforts;
+    if (!value) return '-';
+    if (value < 0.5) return 0;
+    if (value >= 0.5 && value <= 1.5) return 1;
+    if (value > 1.5 && value <= 3.3) return 2;
+    if (value > 3.3 && value <= 5.5) return 3;
+    if (value > 5.5 && value <= 7.9) return 4;
+    if (value > 7.9 && value <= 10.7) return 5;
+    if (value > 10.7 && value <= 13.8) return 6;
+    if (value > 13.8 && value <= 17.1) return 7;
+    if (value > 17.1 && value <= 20.7) return 8;
+    if (value > 20.7 && value <= 24.4) return 9;
+    if (value > 24.4 && value <= 28.4) return 10;
+    if (value > 28.4 && value <= 32.6) return 11;
+    if (value > 32.6) return 12;
+    return '-';
   },
   roundToDigits: function roundToDigits(number, digits) {
     if (number === 0) return 0;
@@ -270,27 +247,28 @@ L.Control.Velocity = L.Control.extend({
   },
   _onMouseMove: function _onMouseMove(e) {
     var self = this;
+    var weatherDataDate = (0, _moment["default"])(self.options.leafletVelocity.options.data[0].meta.date).utc().format('HH:mm');
 
     var pos = this.options.leafletVelocity._map.containerPointToLatLng(L.point(e.containerPoint.x, e.containerPoint.y));
 
     var gridValue = this.options.leafletVelocity._windy.interpolatePoint(pos.lng, pos.lat);
 
-    if (!gridValue) return;
     var htmlOut = "";
-    var direction = self.degreesToSides(self.vectorToDegrees(gridValue[0], gridValue[1], this.options.angleConvention)) + ' Wind';
+    if (!gridValue) return;
+    var direction = self.degreesToSides(self.vectorToDegrees(gridValue[0], gridValue[1], this.options.angleConvention), 'wind') + ' Wind';
     var speed = self.msToBeauforts(self.vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit)) + ' Bf';
     var directionText = 'Wind Direction: ';
     var speedText = 'Wind Speed: ';
 
     if (this.options.velocityType.includes('Water')) {
-      direction = self.degreesTocurrentsSides(self.vectorToDegrees(gridValue[0], gridValue[1], this.options.angleConvention));
+      direction = self.degreesToSides(self.vectorToDegrees(gridValue[0], gridValue[1], this.options.angleConvention), 'currents');
       speed = self.roundToDigits(self.meterSec2Knots(self.vectorToSpeed(gridValue[0], gridValue[1], this.options.speedUnit)), 2) + ' Kn';
       directionText = 'Currents Direction: ';
       speedText = 'Currents Speed: ';
     }
 
     if (gridValue && !isNaN(gridValue[0]) && !isNaN(gridValue[1]) && gridValue[2]) {
-      htmlOut = "<strong>" + directionText + "</strong>" + direction + ", <strong>" + speedText + "</strong>" + speed;
+      htmlOut = "<strong>" + directionText + "</strong>" + direction + ", <strong>" + speedText + "</strong>" + speed + '</br>Updated at ' + weatherDataDate + ' UTC';
     } else {
       htmlOut = this.options.emptyString;
     }
