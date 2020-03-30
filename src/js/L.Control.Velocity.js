@@ -1,3 +1,6 @@
+import moment from 'moment';
+
+
 L.Control.Velocity = L.Control.extend({
   options: {
     position: "bottomleft",
@@ -104,6 +107,7 @@ msToBeauforts : value => {
 
   _onMouseMove: function(e) {
     var self = this;
+    var weatherDataDate = moment(self.options.leafletVelocity.options.data[0].meta.date).utc().format('HH:mm');
     var pos = this.options.leafletVelocity._map.containerPointToLatLng(
       L.point(e.containerPoint.x, e.containerPoint.y)
     );
@@ -115,7 +119,7 @@ msToBeauforts : value => {
     if(!gridValue) return;
     var direction = self.degreesToSides(self.vectorToDegrees(gridValue[0],gridValue[1],this.options.angleConvention), 'wind') + ' Wind';
     var speed = self.msToBeauforts(self.vectorToSpeed(gridValue[0],gridValue[1],this.options.speedUnit)) + ' Bf';
-    var directionText = 'Wind Direction: ';
+    var directionText = 'Wind Directionnnnnn: ';
     var speedText = 'Wind Speed: ';
 
     if(this.options.velocityType.includes('Water')) {
@@ -133,7 +137,7 @@ msToBeauforts : value => {
     ) {
       htmlOut = "<strong>"+ directionText +"</strong>"+ direction +
         ", <strong>"+ speedText + "</strong>"+
-        speed;
+        speed + '</br>Updated at '+ weatherDataDate + ' UTC';
     } else {
       htmlOut = this.options.emptyString;
     }
